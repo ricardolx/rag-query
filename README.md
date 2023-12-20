@@ -1,4 +1,4 @@
-Slides app - intelligent querying of Google Slides presentations. After granting access to drive and slides through Google's OAuth API, your Presentation notes and content are saved into a vector DB (Pinecone). You can ask questions about your presentations without specifying which presentation file contains the information 0 AI finds the best document for the information.
+Slides app - intelligent querying of Google Slides presentations. After granting access to drive and slides through Google's OAuth API, your Presentation notes and content are saved into a vector DB (Pinecone). You can ask questions about your presentations without specifying which presentation file contains the information - AI finds the best document for the information.
 
 ## Getting Started
 
