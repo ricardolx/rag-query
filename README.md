@@ -18,6 +18,13 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 in the /functions dir
 
+### Function ENV variables /functions.env
+CLIENT_ID= Google OAuth Client ID
+CLIENT_SECRET= Google OAuth Client Secret
+REDIRECT_PAGE= The webapp landing page
+HANDLER= OAuth Redirect Handler function
+OPENAI_KEY=OpenAI Api Key
+
 ## Deploy backend
 
 - firebase deploy --only functions

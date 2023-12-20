@@ -19,6 +19,7 @@ import {
 } from "./auth";
 import { firestore } from "./data";
 import { Collection } from "./types";
+import OpenAI from "openai";
 
 const oauth2Client = new google.auth.OAuth2({
   clientId: process.env.CLIENT_ID,
@@ -136,12 +137,14 @@ exports.getSlides = onCall(async context => {
 
     const notes: string[] = [];
 
-    presentation.data.slides?.forEach(slide => {
+    presentation.data.slides?.forEach((slide, i) => {
+      notes.push("Slide: " + (i + 1) + "\n");
       const notesId =
         slide.slideProperties?.notesPage?.notesProperties?.speakerNotesObjectId;
       logger.warn("Note id found", notesId);
 
       if (notesId !== null && notesId !== undefined) {
+        notes.push("Notes:");
         const noteP = slide.slideProperties?.notesPage?.pageElements?.find(
           e => e.objectId === notesId
         );
@@ -156,6 +159,13 @@ exports.getSlides = onCall(async context => {
 
         notes.push(noteContent ?? "");
       }
+
+      notes.push("Content:");
+      slide.pageElements
+        ?.map(e =>
+          e.shape?.text?.textElements?.map(t => t.textRun?.content).join("")
+        )
+        .forEach(e => notes.push(e ?? ""));
     });
 
     await firestore
@@ -169,4 +179,35 @@ exports.getSlides = onCall(async context => {
   });
 
   return;
+});
+
+exports.questionDocument = onCall(async context => {
+  const { id, question } = context.data;
+
+  const doc = await firestore
+    .collection(Collection.Presentations)
+    .doc(id)
+    .get();
+
+  const prompt = `Given a document, answer a question about the document
+    Do not include any other information. Only include the information that is
+    in the document in the answer. If there is a question that 
+    cannot be answered, please say that there isn't enough information.
+    
+    Document: ${doc.data()?.notes}
+    Question: ${question}`;
+
+  const openai = new OpenAI({
+    apiKey: process.env.OPENAI_KEY,
+  });
+
+  const response = await openai.completions.create({
+    model: "gpt-3.5-turbo-instruct",
+    prompt,
+    temperature: 0.3,
+    stream: false,
+    max_tokens: 1000,
+  });
+
+  return { answer: response.choices[0].text };
 });

@@ -38,13 +38,15 @@ export const AuthContextProvider = ({
   });
   const [accessToken, setAccessToken] = useState<string>("");
 
-  const googleSignIn = async () => {
+  const googleSignIn = useCallback(async () => {
     try {
-      await signInAnonymously(auth);
+      if (user === null) {
+        await signInAnonymously(auth);
+      }
     } catch (err) {
       console.warn(err);
     }
-  };
+  }, [user]);
 
   const logOut = () => {
     signOut(auth);
