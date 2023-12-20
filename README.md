@@ -22,6 +22,18 @@ in the /functions dir
 
 - firebase deploy --only functions
 
+### Services to enable in GCP
+- Google Drive API
+- Google Slides API
+- Google Oauth API
+- Google Functions
+- Firebase Auth
+- Firestore
+  - Semantic Search API
+#### GCP Configuration and Permissions
+- App Engine Service Account - Service Account Token Creator to create custom tokens
+- OAuth 2.0 Client ID
+   - Configure origins and redirects from WebApp
 # Architecture
 
-![Screenshot 2023-12-19 at 8 43 38 PM](https://github.com/ricardolx/slides-app/assets/37557051/c0c78c29-9821-4e65-8f1d-4c30c951cd84)
+![Untitled Diagram](https://github.com/ricardolx/slides-app/assets/37557051/3c6d65b2-0051-4df2-9f66-f9ec56bfc835)
