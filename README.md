@@ -41,4 +41,4 @@ in the /functions dir
    - May need more than base 256MB to process slides 
 # Architecture
 
-![Untitled Diagram](https://github.com/ricardolx/slides-app/assets/37557051/3c6d65b2-0051-4df2-9f66-f9ec56bfc835)
+![Arch](https://github.com/ricardolx/slides-app/assets/37557051/c1fa0d22-19c0-440e-be2a-98ef18a2ec1d)
