@@ -195,7 +195,9 @@ exports.questionDocument = onCall(async context => {
   console.log({ id, question });
   console.log({ req: context.data });
 
+  let vectorSearch = false;
   if (id === "NONE") {
+    vectorSearch = true;
     logger.log("No id found, querying vector index");
     id = await queryVectorIndex(question);
     if (!id) {
@@ -236,7 +238,15 @@ exports.questionDocument = onCall(async context => {
     max_tokens: 1000,
   });
 
-  return { answer: response.choices[0].text };
+  let answer = "";
+
+  if (vectorSearch) {
+    answer = `From document: ${doc.data()?.title}\r\n\r\n`;
+  }
+
+  answer += response.choices[0].text;
+
+  return { answer };
 });
 
 exports.onPresentationWritten = onDocumentWritten(
