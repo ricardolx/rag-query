@@ -56,7 +56,6 @@ export const AuthContextProvider = ({
 
   useEffect(() => {
     const sub = onAuthStateChanged(auth, async currentUser => {
-      console.log({ currentUser });
       if (currentUser !== null && !currentUser.isAnonymous) {
         setUser({ user: currentUser, isAnon: false });
       } else {

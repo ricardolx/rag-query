@@ -118,14 +118,9 @@ exports.getSlides = onCall(async context => {
     q: "mimeType='application/vnd.google-apps.presentation'",
   });
 
-  logger.log({ files });
-  logger.warn(files.data.files);
-
   if (files.data.files !== undefined && files.data.files.length === 0) {
     return;
   }
-
-  logger.log();
 
   const slidesApi = google.slides({ version: "v1", auth: oauth2Client });
 
@@ -137,15 +132,40 @@ exports.getSlides = onCall(async context => {
     const presentation = await slidesApi.presentations.get({
       presentationId: file.id ?? "",
     });
-    logger.log({ presentation });
+    logger.log({ p: presentation.data.title });
 
-    const slides = presentation.data.slides;
+    const notes: string[] = [];
 
-    await firestore.collection(Collection.Presentation).doc(file.id).set({
-      uid,
-      title: presentation.data.title,
-      slides,
+    presentation.data.slides?.forEach(slide => {
+      const notesId =
+        slide.slideProperties?.notesPage?.notesProperties?.speakerNotesObjectId;
+      logger.warn("Note id found", notesId);
+
+      if (notesId !== null && notesId !== undefined) {
+        const noteP = slide.slideProperties?.notesPage?.pageElements?.find(
+          e => e.objectId === notesId
+        );
+
+        logger.warn({ name: "note page", noteP });
+
+        const noteContent = noteP?.shape?.text?.textElements
+          ?.map(t => t.textRun?.content)
+          .join("");
+
+        logger.warn({ name: "note content", noteContent });
+
+        notes.push(noteContent ?? "");
+      }
     });
+
+    await firestore
+      .collection(Collection.Presentations)
+      .doc(file.id)
+      .set({
+        uid,
+        title: presentation.data.title,
+        notes: notes.join("\n"),
+      });
   });
 
   return;

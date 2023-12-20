@@ -9,7 +9,7 @@ export const resolveMissingPresentations = async (
 ) => {
   try {
     const presentations = await firestore
-      .collection(Collection.Presentation)
+      .collection(Collection.Presentations)
       .where("uid", "==", uid)
       .get();
 

@@ -23,12 +23,10 @@ const Navbar = () => {
 
   const handleSignIn = async () => {
     try {
-      console.log("calling");
       const call = httpsCallable(functions, "getAuthentication");
       const response = await call();
       const data = response.data as any;
 
-      console.log({ response });
       window.location.href = data.url;
     } catch (err) {
       console.warn(err);

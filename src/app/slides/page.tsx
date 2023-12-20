@@ -27,12 +27,13 @@ const Page: React.FC = () => {
   }, [user, accessToken]);
 
   useEffect(() => {
+    console.log({ user });
     if (!user || user.isAnonymous) {
       return;
     }
-    console.log({ user, action: "q" });
+    console.log(user.email);
     const q = query(
-      collection(firestore, "Presentation"),
+      collection(firestore, "Presentations"),
       where("uid", "==", user.uid)
     );
 
@@ -53,7 +54,6 @@ const Page: React.FC = () => {
     <div className="flex min-h-screen flex-col items-center justify-between p-24">
       {presentations.length === 0 && (
         <div className="items-center ">
-          <h1>Slides loading</h1>
           <div className="lds-ellipsis">
             <div></div>
             <div></div>
