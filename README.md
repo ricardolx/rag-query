@@ -34,6 +34,10 @@ in the /functions dir
 - App Engine Service Account - Service Account Token Creator to create custom tokens
 - OAuth 2.0 Client ID
    - Configure origins and redirects from WebApp
+##### Function Permissions
+- GetAuthenticaion - Invocable by anonymous
+- Handle Redirect - callable by https
+- GetSlides - Invocable by authenticated user
 # Architecture
 
 ![Untitled Diagram](https://github.com/ricardolx/slides-app/assets/37557051/3c6d65b2-0051-4df2-9f66-f9ec56bfc835)
