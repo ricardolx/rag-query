@@ -34,7 +34,7 @@ in the /functions dir
 - App Engine Service Account - Service Account Token Creator to create custom tokens
 - OAuth 2.0 Client ID
    - Configure origins and redirects from WebApp
-##### Function Permissions and Settiongs
+##### Function Permissions and Settings
 - GetAuthenticaion (Retrieve Login) - Invocable by anonymous
 - OauthRedirect (Handle Redirect) - callable by https
 - GetSlides (Retrieve Slides) - Invocable by authenticated user
