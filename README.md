@@ -53,4 +53,5 @@ OPENAI_KEY=OpenAI Api Key
    - May need more than base 256MB to process slides 
 # Architecture
 
-![Arch](https://github.com/ricardolx/slides-app/assets/37557051/c1fa0d22-19c0-440e-be2a-98ef18a2ec1d)
+![ArchP](https://github.com/ricardolx/slides-app/assets/37557051/0e7d9ce4-ee4e-4cfd-a4bc-fca3eb256835)
+
