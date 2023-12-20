@@ -17,17 +17,8 @@ import {
   getFirebaseAuthUser,
   updateTokens,
 } from "./auth";
-import {
-  Presentation,
-  insertSlides,
-  resolveMissingPresentations,
-} from "./data";
-import { initializeApp } from "firebase-admin/app";
-
-initializeApp();
-
-// Start writing functions
-// https://firebase.google.com/docs/functions/typescript
+import { firestore } from "./data";
+import { Collection } from "./types";
 
 const oauth2Client = new google.auth.OAuth2({
   clientId: process.env.CLIENT_ID,
@@ -117,36 +108,45 @@ exports.getSlides = onCall(async context => {
     throw new Error("Invalid token");
   }
 
-  oauth2Client.setCredentials(token);
+  oauth2Client.setCredentials({ access_token: token });
 
   const driveApi = google.drive({ version: "v3", auth: oauth2Client });
 
   const files = await driveApi.files.list({
-    orderBy: "modifiedTime",
+    orderBy: "modifiedTime desc",
     pageSize: 10,
     q: "mimeType='application/vnd.google-apps.presentation'",
   });
 
   logger.log({ files });
+  logger.warn(files.data.files);
 
-  const slidesApi = google.slides({ version: "v1", auth: token });
-
-  if (!files.data.files) {
+  if (files.data.files !== undefined && files.data.files.length === 0) {
     return;
   }
 
-  const missingSlides = await resolveMissingPresentations(
-    uid,
-    files.data.files?.map(file => file.id?.toString() ?? "")
-  );
+  logger.log();
 
-  const presentations: Presentation[] = [];
-  missingSlides.forEach(async presentationId => {
-    const newP = await slidesApi.presentations.get({ presentationId });
-    presentations.push(newP.data as Presentation);
+  const slidesApi = google.slides({ version: "v1", auth: oauth2Client });
+
+  files.data.files?.forEach(async file => {
+    if (!file.id) {
+      logger.log("invalid file", file);
+      return;
+    }
+    const presentation = await slidesApi.presentations.get({
+      presentationId: file.id ?? "",
+    });
+    logger.log({ presentation });
+
+    const slides = presentation.data.slides;
+
+    await firestore.collection(Collection.Presentation).doc(file.id).set({
+      uid,
+      title: presentation.data.title,
+      slides,
+    });
   });
-
-  await insertSlides(uid, presentations);
 
   return;
 });

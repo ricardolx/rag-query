@@ -3,15 +3,6 @@ import { Collection } from "../types";
 
 export const firestore = getFirestore();
 
-export interface Presentation {
-  title: string;
-  slides: string[];
-  thumbnail: string;
-  created: number;
-  updated: number;
-  id: string;
-}
-
 export const resolveMissingPresentations = async (
   uid: string,
   presentationIds: string[]
@@ -34,22 +25,5 @@ export const resolveMissingPresentations = async (
   } catch (error: any) {
     console.error(error.message);
     return [];
-  }
-};
-
-export const insertSlides = async (
-  uid: string,
-  presenetations: Presentation[]
-) => {
-  try {
-    presenetations.forEach(async presentation => {
-      await firestore
-        .collection(Collection.Presentation)
-        .add({ ...presentation, uid });
-    });
-    return true;
-  } catch (error: any) {
-    console.error(error.message);
-    return false;
   }
 };

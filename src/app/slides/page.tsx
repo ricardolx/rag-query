@@ -8,32 +8,40 @@ const Page: React.FC = () => {
   const { user, accessToken } = UserAuth();
   const [presentations, setPresentations] = useState<string[]>([]);
 
-  const fetchSlides = useCallback(async () => {
-    try {
-      const call = httpsCallable(functions, "getSlides");
-
-      await call({ access_token: accessToken });
-    } catch (err) {
-      console.warn(err);
-    }
-  }, [user, accessToken]);
-
   // initial load
   useEffect(() => {
+    if (!user || user.isAnonymous) {
+      return;
+    }
+    const fetchSlides = async () => {
+      try {
+        const call = httpsCallable(functions, "getSlides");
+
+        await call({ access_token: accessToken });
+      } catch (err) {
+        console.warn(err);
+      }
+    };
     fetchSlides();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [user, accessToken]);
 
   useEffect(() => {
+    if (!user || user.isAnonymous) {
+      return;
+    }
+    console.log({ user, action: "q" });
     const q = query(
-      collection(firestore, "presentations"),
-      where("uid", "==", user?.uid)
+      collection(firestore, "Presentation"),
+      where("uid", "==", user.uid)
     );
 
     const sub = onSnapshot(q, snapshot => {
+      console.log({ snapshot });
       const presentations: string[] = [];
       snapshot.forEach(doc => {
-        presentations.push(doc.data().presentationId);
+        console.log(doc.data());
+        presentations.push(doc.data().title);
       });
       setPresentations(presentations);
     });
@@ -43,12 +51,22 @@ const Page: React.FC = () => {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-between p-24">
-      <h1>This is the slides page</h1>
-      <div className="p-12">
-        {presentations.map(p => (
-          <p>{p}</p>
+      {presentations.length === 0 && (
+        <div className="items-center ">
+          <h1>Slides loading</h1>
+          <div className="lds-ellipsis">
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+          </div>
+        </div>
+      )}
+      <ol className="p-12">
+        {presentations.map((p, i) => (
+          <li key={p + i}>{p}</li>
         ))}
-      </div>
+      </ol>
     </div>
   );
 };

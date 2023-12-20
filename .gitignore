@@ -40,3 +40,6 @@ next-env.d.ts
 .firebase/*
 .next/*
 src/firebase/config.ts
+functions/lib/*
+functions/firebase-debug.log
+functions/ui-debug.log
