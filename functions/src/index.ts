@@ -21,7 +21,11 @@ import {
 import { firestore } from "./data";
 import { Collection } from "./types";
 import OpenAI from "openai";
-import { getEmbeddingVector, insertEmbedding } from "./vector";
+import {
+  getEmbeddingVector,
+  insertEmbedding,
+  queryVectorIndex,
+} from "./vector";
 
 const oauth2Client = new google.auth.OAuth2({
   clientId: process.env.CLIENT_ID,
@@ -184,11 +188,13 @@ exports.getSlides = onCall(async context => {
 });
 
 exports.questionDocument = onCall(async context => {
-  const { id, question } = context.data;
+  let { id, question } = context.data;
 
   if (!id) {
-    // perform vector search
-    return "Unable to identify this information in any document.";
+    id = await queryVectorIndex(question);
+    if (!id) {
+      return { answer: "Unable to identify this information in any document." };
+    }
   }
 
   const doc = await firestore
