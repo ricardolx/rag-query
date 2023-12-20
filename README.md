@@ -84,5 +84,4 @@ PINECONE_ENVIRONMENT= Pinecone cloud environment
   
 # Architecture
 
-![Architecture](https://github.com/ricardolx/slides-app/assets/37557051/ebcc5eac-f259-4750-8b36-33460eb80860)
-
+![Architecture](https://github.com/ricardolx/slides-app/assets/37557051/cd832a25-6f32-4835-81c0-05ff3e206009)
