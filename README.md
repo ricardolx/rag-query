@@ -10,13 +10,28 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result
 
+#### Firebase authentication required for access to slides page
+
 ## Deploy on Firebase static hosting
 
 - firebase deploy --only hosting
 
-# Backend serverless functions
+# Backend 
+
+## Pine cone
+
+- Get pinecone api key
+- Using with npm or pip package
+   - Create Index 
+
+## serverless functions
 
 in the /functions dir
+- **getAuthentication** - Get custom google OAuth URL with user profile, drive, slides scopes
+- **oauthRedirect** - Handle redirect from Google OAuth, create firebase token for webApp authentication
+- **getSlides** - Hit the Drive/Slides api and extract notes and slide content, save to Firestore
+- **questionDocument** - Ask a question to the AI about your slides
+- **onPresentationWritten** - When a slide is saved from getSlides to firestore, automatically create vector and store in Pinecone
 
 ### Function ENV variables /functions.env
 CLIENT_ID= Google OAuth Client ID
@@ -57,7 +72,14 @@ PINECONE_ENVIRONMENT= Pinecone cloud environment
 - GetAuthenticaion (Retrieve Login) - Invocable by anonymous
 - OauthRedirect (Handle Redirect) - callable by https
 - GetSlides (Retrieve Slides) - Invocable by authenticated user
-   - May need more than base 256MB to process slides 
+   - May need more than base 256MB to process slides
+- QuestionDocument - Invocable by authenticated user
+- onPresentationWritten - Invocable on document written to firestore Presentations collection
+##### Firestore Collections
+- Users - contains user OAuth token and refresh token
+- Slides - contains users slide presentation content
+- Embeddings - contains presentation content embeddings
+  
 # Architecture
 
 ![ArchP](https://github.com/ricardolx/slides-app/assets/37557051/0e7d9ce4-ee4e-4cfd-a4bc-fca3eb256835)
