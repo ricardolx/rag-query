@@ -8,6 +8,7 @@
  */
 
 import { onCall, onRequest } from "firebase-functions/v2/https";
+import { onDocumentWritten } from "firebase-functions/v2/firestore";
 import * as logger from "firebase-functions/logger";
 import { google } from "googleapis";
 import {
@@ -20,6 +21,7 @@ import {
 import { firestore } from "./data";
 import { Collection } from "./types";
 import OpenAI from "openai";
+import { getEmbeddingVector, insertEmbedding } from "./vector";
 
 const oauth2Client = new google.auth.OAuth2({
   clientId: process.env.CLIENT_ID,
@@ -163,7 +165,7 @@ exports.getSlides = onCall(async context => {
       notes.push("Content:");
       slide.pageElements
         ?.map(e =>
-          e.shape?.text?.textElements?.map(t => t.textRun?.content).join("")
+          e.shape?.text?.textElements?.map(t => t.textRun?.content).join(" ")
         )
         .forEach(e => notes.push(e ?? ""));
     });
@@ -183,6 +185,11 @@ exports.getSlides = onCall(async context => {
 
 exports.questionDocument = onCall(async context => {
   const { id, question } = context.data;
+
+  if (!id) {
+    // perform vector search
+    return "Unable to identify this information in any document.";
+  }
 
   const doc = await firestore
     .collection(Collection.Presentations)
@@ -211,3 +218,28 @@ exports.questionDocument = onCall(async context => {
 
   return { answer: response.choices[0].text };
 });
+
+exports.onPresentationWritten = onDocumentWritten(
+  "Presentation",
+  async event => {
+    const presentation = event.data?.after.data();
+    if (presentation === undefined) {
+      return;
+    }
+    const notes = presentation.notes;
+    if (notes === undefined) {
+      return;
+    }
+
+    const id = presentation.id;
+
+    return getEmbeddingVector(notes).then(async vector => {
+      await firestore
+        .collection(Collection.Embeddings)
+        .doc(id)
+        .update({ vector });
+
+      await insertEmbedding(id, vector);
+    });
+  }
+);

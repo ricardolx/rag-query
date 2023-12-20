@@ -8,6 +8,10 @@ interface Presentation {
   id: string;
   title: string;
 }
+interface QuestionAndAnswer {
+  question?: string;
+  answer?: string;
+}
 
 const Page: React.FC = () => {
   const { user, accessToken } = UserAuth();
@@ -15,8 +19,7 @@ const Page: React.FC = () => {
   const [selectedPresentation, setSelectedPresentation] = useState<
     Presentation | undefined
   >();
-  const [question, setQuestion] = useState<string>("");
-  const [answer, setAnswer] = useState<string>("");
+  const [question, setQuestion] = useState<QuestionAndAnswer>({});
 
   // initial load
   useEffect(() => {
@@ -69,13 +72,23 @@ const Page: React.FC = () => {
         const data = response.data as any;
         const answer = data.answer;
         if (!answer) {
-          setAnswer("Unable to resolve an answer");
+          setQuestion({
+            question: undefined,
+            answer: "Unable to resolve an answer",
+          });
         } else {
-          setAnswer(answer);
+          setQuestion({
+            question: undefined,
+            answer,
+          });
         }
       } catch (err) {
         console.warn(err);
-        setAnswer("An error ocurred: Unable to retrieve an answer");
+
+        setQuestion({
+          question: undefined,
+          answer: "An error ocurred: Unable to retrieve an answer",
+        });
       }
     },
     [accessToken, question]
@@ -84,6 +97,34 @@ const Page: React.FC = () => {
   useEffect(() => {
     console.log({ selectedPresentation });
   }, [selectedPresentation]);
+
+  const toggleSelectedPresentation = useCallback(
+    (p: Presentation) => {
+      if (selectedPresentation?.id === p.id) {
+        setSelectedPresentation(undefined);
+      } else {
+        setSelectedPresentation(p);
+      }
+    },
+    [selectedPresentation, setSelectedPresentation]
+  );
+
+  const presentationName = useCallback(
+    (p: Presentation, i: number) => {
+      const textColor =
+        selectedPresentation?.id === p.id ? "text-white" : "text-gray-600";
+      return (
+        <li
+          onClick={() => toggleSelectedPresentation(p)}
+          key={p.title + i}
+          className={`${textColor}`}
+        >
+          {p.title}
+        </li>
+      );
+    },
+    [selectedPresentation]
+  );
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-between p-24">
@@ -97,30 +138,32 @@ const Page: React.FC = () => {
           </div>
         </div>
       )}
-      <div className="flex flex-row h-10 justify-between align-around">
-        <div>
+      <div className="flex flex-row h-10 w-11/12 ">
+        <div className="w-4/12">
           <ol className="p-12">
             {presentations.map((p, i) => (
-              <li onClick={() => setSelectedPresentation(p)} key={p.title + i}>
-                {p.title}
-              </li>
+              <>{presentationName(p, i)}</>
             ))}
           </ol>
         </div>
-        <div className="flex flex-col">
+        <div className="flex flex-col h-96 w-full items-center justify-between">
           {selectedPresentation === undefined ? (
-            <div>Select a presentation to ask a question</div>
+            <div>Ask a question</div>
           ) : (
             <div>
               <p>{`Ask a question about ${selectedPresentation?.title}`}</p>
             </div>
           )}
-          <>{answer && <div>{answer}</div>}</>
-          <div className="">
+          <div>
+            {question.answer && (
+              <p className="text-gray-400">{question.answer}</p>
+            )}
+          </div>
+          <div className="w-full">
             <input
-              value={question}
-              onChange={e => setQuestion(e.target.value)}
-              className="p-2 rounded-lg text-black"
+              value={question.question || ""}
+              onChange={e => setQuestion({ question: e.target.value })}
+              className="p-2 rounded-lg text-black w-4/5"
             />
             <button
               className="pl-5"
