@@ -1,4 +1,4 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+Slides app - intelligent querying of Google Slides presentations. After granting access to drive and slides through Google's OAuth API, your Presentation notes and content are saved into a vector DB (Pinecone). You can ask questions about your presentations without specifying which presentation file contains the information 0 AI finds the best document for the information.
 
 ## Getting Started
 
@@ -21,7 +21,6 @@ in the /functions dir
 ### Function ENV variables /functions.env
 CLIENT_ID= Google OAuth Client ID
 
-
 CLIENT_SECRET= Google OAuth Client Secret
 
 REDIRECT_PAGE= The webapp landing page
@@ -29,6 +28,14 @@ REDIRECT_PAGE= The webapp landing page
 HANDLER= OAuth Redirect Handler function
 
 OPENAI_KEY=OpenAI Api Key
+
+VECTOR_MODEL= Embedding vector model (OpenAI)
+
+PINECONE_KEY= Pinecone API key
+
+PINECONE_DOCUMENT_INDEX= Pinecone Vector Index
+
+PINECONE_ENVIRONMENT= Pinecone cloud environment
 
 ## Deploy backend
 
@@ -53,4 +60,5 @@ OPENAI_KEY=OpenAI Api Key
    - May need more than base 256MB to process slides 
 # Architecture
 
-![Arch](https://github.com/ricardolx/slides-app/assets/37557051/c1fa0d22-19c0-440e-be2a-98ef18a2ec1d)
+![ArchP](https://github.com/ricardolx/slides-app/assets/37557051/0e7d9ce4-ee4e-4cfd-a4bc-fca3eb256835)
+
