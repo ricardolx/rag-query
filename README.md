@@ -32,3 +32,7 @@ in the /functions dir
 ## Deploy backend
 
 - firebase deploy --only functions
+
+# Architecture
+
+![Screenshot 2023-12-19 at 8 43 38 PM](https://github.com/ricardolx/slides-app/assets/37557051/c0c78c29-9821-4e65-8f1d-4c30c951cd84)
