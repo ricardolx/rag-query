@@ -63,36 +63,37 @@ const Page: React.FC = () => {
     return () => sub();
   }, [user]);
 
-  const queryVector = useCallback(
-    async (id: string) => {
-      try {
-        const call = httpsCallable(functions, "questionDocument");
+  const submitQuestion = useCallback(async () => {
+    try {
+      const call = httpsCallable(functions, "questionDocument");
+      const id = selectedPresentation?.id ?? "NONE";
 
-        const response = await call({ id, question });
-        const data = response.data as any;
-        const answer = data.answer;
-        if (!answer) {
-          setQuestion({
-            question: undefined,
-            answer: "Unable to resolve an answer",
-          });
-        } else {
-          setQuestion({
-            question: undefined,
-            answer,
-          });
-        }
-      } catch (err) {
-        console.warn(err);
+      const data = { id, question: question.question };
 
+      const response = await call(data);
+
+      const responseData = response.data as any;
+      const answer = responseData.answer;
+      if (!answer) {
         setQuestion({
           question: undefined,
-          answer: "An error ocurred: Unable to retrieve an answer",
+          answer: "Unable to resolve an answer",
+        });
+      } else {
+        setQuestion({
+          question: undefined,
+          answer,
         });
       }
-    },
-    [accessToken, question]
-  );
+    } catch (err) {
+      console.warn(err);
+
+      setQuestion({
+        question: undefined,
+        answer: "An error ocurred: Unable to retrieve an answer",
+      });
+    }
+  }, [accessToken, question, selectedPresentation]);
 
   useEffect(() => {
     console.log({ selectedPresentation });
@@ -142,7 +143,7 @@ const Page: React.FC = () => {
         <div className="w-4/12">
           <ol className="p-12">
             {presentations.map((p, i) => (
-              <>{presentationName(p, i)}</>
+              <div key={p.id + p.title}>{presentationName(p, i)}</div>
             ))}
           </ol>
         </div>
@@ -159,19 +160,18 @@ const Page: React.FC = () => {
               <p className="text-gray-400">{question.answer}</p>
             )}
           </div>
-          <div className="w-full">
+          <div
+            className="w-full items-center justify-center flex"
+            // onSubmit={submitQuestion}
+          >
             <input
               value={question.question || ""}
               onChange={e => setQuestion({ question: e.target.value })}
               className="p-2 rounded-lg text-black w-4/5"
+              onSubmit={submitQuestion}
+              required={true}
             />
-            <button
-              className="pl-5"
-              disabled={!selectedPresentation}
-              onClick={() => {
-                queryVector(selectedPresentation!.id);
-              }}
-            >
+            <button type="submit" className="pl-5" onClick={submitQuestion}>
               Ask
             </button>
           </div>

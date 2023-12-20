@@ -142,15 +142,16 @@ exports.getSlides = onCall(async context => {
     logger.log({ p: presentation.data.title });
 
     const notes: string[] = [];
+    const pageContent: string[] = [];
 
     presentation.data.slides?.forEach((slide, i) => {
-      notes.push("Slide: " + (i + 1) + "\n");
+      notes.push("Slide: " + (i + 1) + "\r\n");
       const notesId =
         slide.slideProperties?.notesPage?.notesProperties?.speakerNotesObjectId;
       logger.warn("Note id found", notesId);
 
       if (notesId !== null && notesId !== undefined) {
-        notes.push("Notes:");
+        notes.push("Notes: \r\n");
         const noteP = slide.slideProperties?.notesPage?.pageElements?.find(
           e => e.objectId === notesId
         );
@@ -163,15 +164,15 @@ exports.getSlides = onCall(async context => {
 
         logger.warn({ name: "note content", noteContent });
 
-        notes.push(noteContent ?? "");
+        notes.push(noteContent ?? "" + "\r\n");
       }
 
-      notes.push("Content:");
+      pageContent.push("Slide Content: \r\n");
       slide.pageElements
         ?.map(e =>
-          e.shape?.text?.textElements?.map(t => t.textRun?.content).join(" ")
+          e.shape?.text?.textElements?.map(t => t.textRun?.content).join("\r\n")
         )
-        .forEach(e => notes.push(e ?? ""));
+        .forEach(e => pageContent.push(e ?? "\r\n"));
     });
 
     await firestore
@@ -180,7 +181,8 @@ exports.getSlides = onCall(async context => {
       .set({
         uid,
         title: presentation.data.title,
-        notes: notes.join("\n"),
+        notes: notes.join("\r\n"),
+        pageContent: pageContent.join("\r\n"),
       });
   });
 
@@ -190,11 +192,16 @@ exports.getSlides = onCall(async context => {
 exports.questionDocument = onCall(async context => {
   let { id, question } = context.data;
 
-  if (!id) {
+  console.log({ id, question });
+  console.log({ req: context.data });
+
+  if (id === "NONE") {
+    logger.log("No id found, querying vector index");
     id = await queryVectorIndex(question);
     if (!id) {
       return { answer: "Unable to identify this information in any document." };
     }
+    logger.log("Found id for vector", id);
   }
 
   const doc = await firestore
@@ -202,12 +209,19 @@ exports.questionDocument = onCall(async context => {
     .doc(id)
     .get();
 
+  logger.log("Found document", doc.data()?.title);
+
   const prompt = `Given a document, answer a question about the document
     Do not include any other information. Only include the information that is
     in the document in the answer. If there is a question that 
     cannot be answered, please say that there isn't enough information.
+    The slide content may not be discernable. If that is the case 
+    then ignore it and focus on the notes.
     
     Document: ${doc.data()?.notes}
+
+    Page Content: ${doc.data()?.pageContent ?? ""}
+
     Question: ${question}`;
 
   const openai = new OpenAI({
@@ -226,7 +240,7 @@ exports.questionDocument = onCall(async context => {
 });
 
 exports.onPresentationWritten = onDocumentWritten(
-  "Presentation",
+  "Presentations/{docId}",
   async event => {
     const presentation = event.data?.after.data();
     if (presentation === undefined) {
@@ -237,13 +251,18 @@ exports.onPresentationWritten = onDocumentWritten(
       return;
     }
 
-    const id = presentation.id;
+    const id = event.data?.after.id;
+
+    if (!id) {
+      logger.warn("No id found");
+      return;
+    }
 
     return getEmbeddingVector(notes).then(async vector => {
       await firestore
         .collection(Collection.Embeddings)
         .doc(id)
-        .update({ vector });
+        .set({ vector }, { merge: true });
 
       await insertEmbedding(id, vector);
     });

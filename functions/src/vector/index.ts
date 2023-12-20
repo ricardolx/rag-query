@@ -7,11 +7,16 @@ export const getEmbeddingVector = async (text: string) => {
     apiKey: process.env.OPENAI_KEY,
   });
 
-  const result = await openai.embeddings.create({
-    input: text,
-    model: process.env.VECTOR_MODEL ?? "text-embedding-ada-002",
-  });
-  return result.data[0].embedding;
+  try {
+    const result = await openai.embeddings.create({
+      input: text,
+      model: process.env.VECTOR_MODEL ?? "text-embedding-ada-002",
+    });
+    return result.data[0].embedding;
+  } catch (error) {
+    logger.warn("error getting embedding vector", error);
+    throw error;
+  }
 };
 
 export const insertEmbedding = async (id: string, values: number[]) => {
