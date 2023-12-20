@@ -20,6 +20,7 @@ const Page: React.FC = () => {
     Presentation | undefined
   >();
   const [question, setQuestion] = useState<QuestionAndAnswer>({});
+  const [loading, setLoading] = useState<boolean>(false);
 
   // initial load
   useEffect(() => {
@@ -40,7 +41,6 @@ const Page: React.FC = () => {
   }, [user, accessToken]);
 
   useEffect(() => {
-    console.log({ user });
     if (!user || user.isAnonymous) {
       return;
     }
@@ -63,37 +63,43 @@ const Page: React.FC = () => {
     return () => sub();
   }, [user]);
 
-  const submitQuestion = useCallback(async () => {
-    try {
-      const call = httpsCallable(functions, "questionDocument");
-      const id = selectedPresentation?.id ?? "NONE";
+  const submitQuestion = useCallback(
+    async (event: { preventDefault: () => void }) => {
+      event?.preventDefault();
+      try {
+        setLoading(true);
+        const call = httpsCallable(functions, "questionDocument");
+        const id = selectedPresentation?.id ?? "NONE";
 
-      const data = { id, question: question.question };
+        const data = { id, question: question.question };
 
-      const response = await call(data);
+        const response = await call(data);
 
-      const responseData = response.data as any;
-      const answer = responseData.answer;
-      if (!answer) {
+        const responseData = response.data as any;
+        const answer = responseData.answer;
+        if (!answer) {
+          setQuestion({
+            question: undefined,
+            answer: "Unable to resolve an answer",
+          });
+        } else {
+          setQuestion({
+            question: undefined,
+            answer,
+          });
+        }
+      } catch (err) {
+        console.warn(err);
+
         setQuestion({
           question: undefined,
-          answer: "Unable to resolve an answer",
-        });
-      } else {
-        setQuestion({
-          question: undefined,
-          answer,
+          answer: "An error ocurred: Unable to retrieve an answer",
         });
       }
-    } catch (err) {
-      console.warn(err);
-
-      setQuestion({
-        question: undefined,
-        answer: "An error ocurred: Unable to retrieve an answer",
-      });
-    }
-  }, [accessToken, question, selectedPresentation]);
+      setLoading(false);
+    },
+    [accessToken, question, selectedPresentation]
+  );
 
   useEffect(() => {
     console.log({ selectedPresentation });
@@ -159,10 +165,20 @@ const Page: React.FC = () => {
             {question.answer && (
               <p className="text-gray-400">{question.answer}</p>
             )}
+            {loading && (
+              <div className="items-center ">
+                <div className="lds-ellipsis">
+                  <div></div>
+                  <div></div>
+                  <div></div>
+                  <div></div>
+                </div>
+              </div>
+            )}
           </div>
-          <div
+          <form
             className="w-full items-center justify-center flex"
-            // onSubmit={submitQuestion}
+            onSubmit={submitQuestion}
           >
             <input
               value={question.question || ""}
@@ -171,10 +187,10 @@ const Page: React.FC = () => {
               onSubmit={submitQuestion}
               required={true}
             />
-            <button type="submit" className="pl-5" onClick={submitQuestion}>
+            <button type="submit" className="pl-5">
               Ask
             </button>
-          </div>
+          </form>
         </div>
       </div>
     </div>

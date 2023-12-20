@@ -145,24 +145,17 @@ exports.getSlides = onCall(async context => {
     const pageContent: string[] = [];
 
     presentation.data.slides?.forEach((slide, i) => {
-      notes.push("Slide: " + (i + 1) + "\r\n");
       const notesId =
         slide.slideProperties?.notesPage?.notesProperties?.speakerNotesObjectId;
-      logger.warn("Note id found", notesId);
 
       if (notesId !== null && notesId !== undefined) {
-        notes.push("Notes: \r\n");
         const noteP = slide.slideProperties?.notesPage?.pageElements?.find(
           e => e.objectId === notesId
         );
 
-        logger.warn({ name: "note page", noteP });
-
         const noteContent = noteP?.shape?.text?.textElements
           ?.map(t => t.textRun?.content)
           .join("");
-
-        logger.warn({ name: "note content", noteContent });
 
         notes.push(noteContent ?? "" + "\r\n");
       }
@@ -175,6 +168,7 @@ exports.getSlides = onCall(async context => {
         .forEach(e => pageContent.push(e ?? "\r\n"));
     });
 
+    logger.log({ pageContent });
     await firestore
       .collection(Collection.Presentations)
       .doc(file.id)
