@@ -1,8 +1,5 @@
 import { getFirestore } from "firebase-admin/firestore";
 import { Collection } from "../types";
-import { initializeApp } from "firebase-admin/app";
-
-initializeApp();
 
 export const firestore = getFirestore();
 

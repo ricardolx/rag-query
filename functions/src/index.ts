@@ -22,6 +22,9 @@ import {
   insertSlides,
   resolveMissingPresentations,
 } from "./data";
+import { initializeApp } from "firebase-admin/app";
+
+initializeApp();
 
 // Start writing functions
 // https://firebase.google.com/docs/functions/typescript
@@ -60,6 +63,7 @@ exports.oauthRedirect = onRequest(async (req, res) => {
     }
     // Get the Google API Token
     const { tokens } = await oauth2Client.getToken(code);
+    oauth2Client.getAccessToken;
     const { id_token } = tokens;
     if (typeof id_token !== "string") {
       throw new Error("Invalid id_token");
@@ -113,7 +117,9 @@ exports.getSlides = onCall(async context => {
     throw new Error("Invalid token");
   }
 
-  const driveApi = google.drive({ version: "v3", auth: token });
+  oauth2Client.setCredentials(token);
+
+  const driveApi = google.drive({ version: "v3", auth: oauth2Client });
 
   const files = await driveApi.files.list({
     orderBy: "modifiedTime",
