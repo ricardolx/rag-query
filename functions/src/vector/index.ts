@@ -49,3 +49,12 @@ export const queryVectorIndex = async (query: string) => {
 
   return response.matches[0].id;
 };
+
+export const deleteEmbedding = async (id: string) => {
+  const pinecone = new Pinecone({
+    apiKey: process.env.PINECONE_KEY ?? "",
+    environment: process.env.PINECONE_ENVIRONMENT ?? "",
+  });
+
+  await pinecone.index(process.env.PINECONE_DOCUMENT_INDEX ?? "").deleteOne(id);
+};

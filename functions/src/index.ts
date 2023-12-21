@@ -22,6 +22,7 @@ import { firestore } from "./data";
 import { Collection } from "./types";
 import OpenAI from "openai";
 import {
+  deleteEmbedding,
   getEmbeddingVector,
   insertEmbedding,
   queryVectorIndex,
@@ -186,12 +187,7 @@ exports.getSlides = onCall(async context => {
 exports.questionDocument = onCall(async context => {
   let { id, question } = context.data;
 
-  console.log({ id, question });
-  console.log({ req: context.data });
-
-  let vectorSearch = false;
   if (id === "NONE") {
-    vectorSearch = true;
     logger.log("No id found, querying vector index");
     id = await queryVectorIndex(question);
     if (!id) {
@@ -205,7 +201,9 @@ exports.questionDocument = onCall(async context => {
     .doc(id)
     .get();
 
-  logger.log("Found document", doc.data()?.title);
+  const title = doc.data()?.title;
+
+  logger.log("Found document", title);
 
   const prompt = `Given a document, answer a question about the document
     Do not include any other information. Only include the information that is
@@ -232,15 +230,9 @@ exports.questionDocument = onCall(async context => {
     max_tokens: 1000,
   });
 
-  let answer = "";
+  const answer = response.choices[0].text;
 
-  if (vectorSearch) {
-    answer = `From document: ${doc.data()?.title}\r\n\r\n`;
-  }
-
-  answer += response.choices[0].text;
-
-  return { answer };
+  return { answer, question, title };
 });
 
 exports.onPresentationWritten = onDocumentWritten(
@@ -248,6 +240,12 @@ exports.onPresentationWritten = onDocumentWritten(
   async event => {
     const presentation = event.data?.after.data();
     if (presentation === undefined) {
+      if (event.data?.before.data() !== undefined) {
+        const id = event.data?.before.id;
+        logger.log("Deleting embedding", id);
+        await deleteEmbedding(id);
+        logger.log("Deletied embedding", id);
+      }
       return;
     }
     const notes = presentation.notes;

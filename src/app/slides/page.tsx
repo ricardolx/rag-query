@@ -1,16 +1,21 @@
 "use client";
-import React, { use, useCallback, useEffect, useState } from "react";
+import React, { use, useCallback, useEffect, useMemo, useState } from "react";
 import { UserAuth } from "../context/auth";
 import { functions, httpsCallable, firestore } from "../../firebase/firebase";
 import { collection, doc, onSnapshot, query, where } from "firebase/firestore";
+import { Loading } from "../components/Loading";
 
 interface Presentation {
   id: string;
   title: string;
 }
 interface QuestionAndAnswer {
-  question?: string;
-  answer?: string;
+  newQuestion?: string;
+  answer?: {
+    answer: string;
+    question: string;
+    title?: string;
+  };
 }
 
 const Page: React.FC = () => {
@@ -19,7 +24,7 @@ const Page: React.FC = () => {
   const [selectedPresentation, setSelectedPresentation] = useState<
     Presentation | undefined
   >();
-  const [question, setQuestion] = useState<QuestionAndAnswer>({});
+  const [questionAndAnswer, setQnA] = useState<QuestionAndAnswer>({});
   const [loading, setLoading] = useState<boolean>(false);
 
   // initial load
@@ -67,38 +72,49 @@ const Page: React.FC = () => {
     async (event: { preventDefault: () => void }) => {
       event?.preventDefault();
       try {
+        if (
+          questionAndAnswer.newQuestion === undefined ||
+          questionAndAnswer.newQuestion.trim() === ""
+        ) {
+          return;
+        }
         setLoading(true);
         const call = httpsCallable(functions, "questionDocument");
         const id = selectedPresentation?.id ?? "NONE";
 
-        const data = { id, question: question.question };
+        const data = { id, question: questionAndAnswer.newQuestion?.trim() };
 
         const response = await call(data);
 
-        const responseData = response.data as any;
-        const answer = responseData.answer;
+        const answer = response.data as any;
         if (!answer) {
-          setQuestion({
-            question: undefined,
-            answer: "Unable to resolve an answer",
+          setQnA({
+            newQuestion: undefined,
+            answer: {
+              question: "",
+              answer: "Unable to resolve an answer",
+            },
           });
         } else {
-          setQuestion({
-            question: undefined,
+          setQnA({
+            newQuestion: undefined,
             answer,
           });
         }
       } catch (err) {
         console.warn(err);
 
-        setQuestion({
-          question: undefined,
-          answer: "An error ocurred: Unable to retrieve an answer",
+        setQnA({
+          newQuestion: undefined,
+          answer: {
+            question: "",
+            answer: "An error ocurred: Unable to retrieve an answer",
+          },
         });
       }
       setLoading(false);
     },
-    [accessToken, question, selectedPresentation]
+    [accessToken, questionAndAnswer, selectedPresentation]
   );
 
   useEffect(() => {
@@ -123,8 +139,7 @@ const Page: React.FC = () => {
       return (
         <li
           onClick={() => toggleSelectedPresentation(p)}
-          key={p.title + i}
-          className={`${textColor}`}
+          className={`${textColor} dark:md:hover:text-gray-300`}
         >
           {p.title}
         </li>
@@ -133,61 +148,73 @@ const Page: React.FC = () => {
     [selectedPresentation]
   );
 
+  const formTitle = useMemo(() => {
+    if (questionAndAnswer.answer !== undefined) {
+      return (
+        <p className="text-gray-300">{`Q: ${questionAndAnswer.answer.question}`}</p>
+      );
+    }
+    return selectedPresentation === undefined ? (
+      <p className="text-gray-300">Ask a question</p>
+    ) : (
+      <p className="text-gray-300">{`Ask a question about ${selectedPresentation?.title}`}</p>
+    );
+  }, [selectedPresentation, questionAndAnswer.answer]);
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-between p-24">
-      {presentations.length === 0 && (
-        <div className="items-center ">
-          <div className="lds-ellipsis">
-            <div></div>
-            <div></div>
-            <div></div>
-            <div></div>
-          </div>
-        </div>
-      )}
+      {presentations.length === 0 && <Loading />}
       <div className="flex flex-row h-10 w-11/12 ">
         <div className="w-4/12">
-          <ol className="p-12">
+          <p className="mx-12">Presentations</p>
+          <ol className="mx-8 my-4">
             {presentations.map((p, i) => (
-              <div key={p.id + p.title}>{presentationName(p, i)}</div>
+              <div
+                key={p.id + p.title}
+                className="rounded-lg px-2 md:hover:cursor-pointer md:hover:bg-gray-900"
+              >
+                {presentationName(p, i)}
+              </div>
             ))}
           </ol>
         </div>
-        <div className="flex flex-col h-96 w-full items-center justify-between">
-          {selectedPresentation === undefined ? (
-            <div>Ask a question</div>
-          ) : (
-            <div>
-              <p>{`Ask a question about ${selectedPresentation?.title}`}</p>
-            </div>
-          )}
+        <div className="flex flex-col h-96 w-full items-center justify-between bg-gray-900 rounded-lg p-5">
+          {formTitle}
           <div>
-            {question.answer && (
-              <p className="text-gray-400">{question.answer}</p>
-            )}
-            {loading && (
-              <div className="items-center ">
-                <div className="lds-ellipsis">
-                  <div></div>
-                  <div></div>
-                  <div></div>
-                  <div></div>
-                </div>
+            {questionAndAnswer.answer && (
+              <div>
+                {(selectedPresentation === undefined ||
+                  selectedPresentation.title !==
+                    questionAndAnswer.answer.title) && (
+                  <p className="text-gray-600 mx-8 my-2">{`From: ${questionAndAnswer.answer.title}`}</p>
+                )}
+                <p className="text-gray-100 mx-8 my-2">
+                  {questionAndAnswer.answer.answer}
+                </p>
               </div>
             )}
+            {loading && <Loading />}
           </div>
           <form
             className="w-full items-center justify-center flex"
             onSubmit={submitQuestion}
           >
             <input
-              value={question.question || ""}
-              onChange={e => setQuestion({ question: e.target.value })}
+              value={questionAndAnswer.newQuestion || ""}
+              onChange={e => setQnA({ newQuestion: e.target.value })}
               className="p-2 rounded-lg text-black w-4/5"
               onSubmit={submitQuestion}
               required={true}
+              placeholder={
+                !selectedPresentation
+                  ? "Ask something about any presentation..."
+                  : `Ask something about ${selectedPresentation?.title}...`
+              }
             />
-            <button type="submit" className="pl-5">
+            <button
+              type="submit"
+              className="ml-5 border-2 border-sky-500 rounded-lg p-2 px-4"
+            >
               Ask
             </button>
           </form>
