@@ -15,7 +15,9 @@ const Navbar = () => {
 
   useEffect(() => {
     if (user === null) {
-      router.push("/");
+      if (window.location.pathname !== "/") {
+        router.push("/");
+      }
     } else {
       router.push("/slides");
     }
