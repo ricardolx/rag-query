@@ -21,8 +21,6 @@ type UserAuth = {
   logOut: () => void;
   user: User | null;
   signInWithToken: (token: string) => void;
-  accessToken: string;
-  setAccessToken: (token: string) => void;
 };
 
 const AuthContext = createContext({} as UserAuth);
@@ -36,7 +34,6 @@ export const AuthContextProvider = ({
     user: null,
     isAnon: false,
   });
-  const [accessToken, setAccessToken] = useState<string>("");
 
   const googleSignIn = useCallback(async () => {
     try {
@@ -75,8 +72,6 @@ export const AuthContextProvider = ({
         logOut,
         googleSignIn,
         signInWithToken,
-        accessToken,
-        setAccessToken,
       }}
     >
       {children}

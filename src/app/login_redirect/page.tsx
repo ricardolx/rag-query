@@ -6,15 +6,13 @@ import { useRouter, useSearchParams } from "next/navigation";
 const Page: React.FC = () => {
   var params = useSearchParams();
   const idToken = params.get("id_token");
-  const accessToken = params.get("access_token");
-  const { signInWithToken, setAccessToken } = UserAuth();
+  const { signInWithToken } = UserAuth();
   const router = useRouter();
 
-  console.log({ idToken, accessToken });
+  console.log({ idToken });
 
   useEffect(() => {
     if (idToken !== null && idToken !== "") {
-      setAccessToken(accessToken!);
       signInWithToken(idToken);
       setTimeout(() => {
         router.replace("/slides");

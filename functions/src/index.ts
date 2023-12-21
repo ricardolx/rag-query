@@ -16,6 +16,7 @@ import {
   createFbToken,
   getAccessToken,
   getFirebaseAuthUser,
+  refreshAccessToken,
   updateTokens,
 } from "./auth";
 import { firestore } from "./data";
@@ -93,14 +94,21 @@ exports.oauthRedirect = onRequest(async (req, res) => {
       tokens.access_token ?? ""
     );
 
-    res.redirect(
-      `${process.env.REDIRECT_PAGE}?id_token=${fbToken}` +
-        `&access_token=${tokens.access_token}`
-    );
+    res.redirect(`${process.env.REDIRECT_PAGE}?id_token=${fbToken}`);
   } catch (e: any) {
     console.warn(e);
     res.status(500).send(e.message);
   }
+});
+
+exports.refreshOuathTOken = onCall(async context => {
+  const uid = context.auth?.uid;
+  if (!uid) {
+    return;
+  }
+  await refreshAccessToken(uid, oauth2Client);
+
+  return { success: true };
 });
 
 exports.getSlides = onCall(async context => {
@@ -108,10 +116,8 @@ exports.getSlides = onCall(async context => {
   if (!uid) {
     return;
   }
-  let token = context.data.access_token;
-  if (!token) {
-    token = await getAccessToken(context.auth?.uid ?? "");
-  }
+  const token = await getAccessToken(context.auth?.uid ?? "");
+
   if (token === null) {
     throw new Error("Invalid token");
   }

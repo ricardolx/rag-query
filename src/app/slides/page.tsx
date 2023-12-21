@@ -19,7 +19,7 @@ interface QuestionAndAnswer {
 }
 
 const Page: React.FC = () => {
-  const { user, accessToken } = UserAuth();
+  const { user } = UserAuth();
   const [presentations, setPresentations] = useState<Presentation[]>([]);
   const [selectedPresentation, setSelectedPresentation] = useState<
     Presentation | undefined
@@ -36,14 +36,14 @@ const Page: React.FC = () => {
       try {
         const call = httpsCallable(functions, "getSlides");
 
-        await call({ access_token: accessToken });
+        await call();
       } catch (err) {
         console.warn(err);
       }
     };
     fetchSlides();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, accessToken]);
+  }, [user]);
 
   useEffect(() => {
     if (!user || user.isAnonymous) {
@@ -114,7 +114,7 @@ const Page: React.FC = () => {
       }
       setLoading(false);
     },
-    [accessToken, questionAndAnswer, selectedPresentation]
+    [questionAndAnswer, selectedPresentation]
   );
 
   useEffect(() => {

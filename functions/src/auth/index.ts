@@ -106,7 +106,7 @@ export const createFbToken = async (userId: string) => {
     console.log("Successfully created custom token for user ", userId);
     return customToken;
   } catch (error: any) {
-    console.warn(`Error creating custom token for user ${userId}: ${error}`);
+    console.error(`Error creating custom token for user ${userId}: ${error}`);
     console.error(error.message);
     return null;
   }
@@ -120,5 +120,18 @@ export const getAccessToken = async (userId: string) => {
   } catch (error: any) {
     console.error(error.message);
     return null;
+  }
+};
+
+export const refreshAccessToken = async (userId: string, client: any) => {
+  try {
+    const userRef = firestore.collection(Collection.Users).doc(userId);
+    const user = await userRef.get();
+    const token = user.data()?.refresh_token;
+
+    client.setCredentials({ refresh_token: token });
+    await client.refreshAccessToken();
+  } catch (error: any) {
+    console.log(error.message);
   }
 };
