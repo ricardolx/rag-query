@@ -111,84 +111,93 @@ exports.refreshOuathTOken = onCall(async context => {
   return { success: true };
 });
 
-exports.getSlides = onCall(async context => {
-  const uid = context.auth?.uid;
-  if (!uid) {
-    return;
-  }
-  const token = await getAccessToken(context.auth?.uid ?? "");
-
-  if (token === null) {
-    throw new Error("Invalid token");
-  }
-
-  oauth2Client.setCredentials({ access_token: token });
-
-  const driveApi = google.drive({ version: "v3", auth: oauth2Client });
-
-  const files = await driveApi.files.list({
-    orderBy: "modifiedTime desc",
-    pageSize: 10,
-    q: "mimeType='application/vnd.google-apps.presentation'",
-  });
-
-  if (files.data.files !== undefined && files.data.files.length === 0) {
-    return;
-  }
-
-  const slidesApi = google.slides({ version: "v1", auth: oauth2Client });
-
-  files.data.files?.forEach(async file => {
-    if (!file.id) {
-      logger.log("invalid file", file);
+exports.getSlides = onCall(
+  {
+    timeoutSeconds: 60,
+    memory: "512MiB",
+  },
+  async context => {
+    const uid = context.auth?.uid;
+    if (!uid) {
       return;
     }
-    const presentation = await slidesApi.presentations.get({
-      presentationId: file.id ?? "",
+    const token = await getAccessToken(context.auth?.uid ?? "");
+
+    if (token === null) {
+      throw new Error("Invalid token");
+    }
+
+    oauth2Client.setCredentials({ access_token: token });
+
+    const driveApi = google.drive({ version: "v3", auth: oauth2Client });
+
+    const files = await driveApi.files.list({
+      orderBy: "modifiedTime desc",
+      pageSize: 10,
+      q: "mimeType='application/vnd.google-apps.presentation'",
     });
-    logger.log({ p: presentation.data.title });
 
-    const notes: string[] = [];
-    const pageContent: string[] = [];
+    if (files.data.files !== undefined && files.data.files.length === 0) {
+      return;
+    }
 
-    presentation.data.slides?.forEach((slide, i) => {
-      const notesId =
-        slide.slideProperties?.notesPage?.notesProperties?.speakerNotesObjectId;
+    const slidesApi = google.slides({ version: "v1", auth: oauth2Client });
 
-      if (notesId !== null && notesId !== undefined) {
-        const noteP = slide.slideProperties?.notesPage?.pageElements?.find(
-          e => e.objectId === notesId
-        );
-
-        const noteContent = noteP?.shape?.text?.textElements
-          ?.map(t => t.textRun?.content)
-          .join("");
-
-        notes.push(noteContent ?? "" + "\r\n");
+    files.data.files?.forEach(async file => {
+      if (!file.id) {
+        logger.log("invalid file", file);
+        return;
       }
+      const presentation = await slidesApi.presentations.get({
+        presentationId: file.id ?? "",
+      });
+      logger.log({ p: presentation.data.title });
 
-      pageContent.push("Slide Content: \r\n");
-      slide.pageElements
-        ?.map(e =>
-          e.shape?.text?.textElements?.map(t => t.textRun?.content).join("\r\n")
-        )
-        .forEach(e => pageContent.push(e ?? "\r\n"));
+      const notes: string[] = [];
+      const pageContent: string[] = [];
+
+      presentation.data.slides?.forEach(slide => {
+        const notesId =
+          slide.slideProperties?.notesPage?.notesProperties
+            ?.speakerNotesObjectId;
+
+        if (notesId !== null && notesId !== undefined) {
+          const noteP = slide.slideProperties?.notesPage?.pageElements?.find(
+            e => e.objectId === notesId
+          );
+
+          const noteContent = noteP?.shape?.text?.textElements
+            ?.map(t => t.textRun?.content)
+            .join("");
+
+          notes.push(noteContent ?? "" + "\r\n");
+        }
+
+        pageContent.push("Slide Content: \r\n");
+        slide.pageElements
+          ?.map(e =>
+            e.shape?.text?.textElements
+              ?.map(t => t.textRun?.content)
+              .join("\r\n")
+          )
+          .forEach(e => pageContent.push(e ?? "\r\n"));
+      });
+
+      logger.log({ pageContent });
+      await firestore
+        .collection(Collection.Presentations)
+        .doc(file.id)
+        .set({
+          uid,
+          title: presentation.data.title,
+          notes: notes.join("\r\n"),
+          pageContent: pageContent.join("\r\n"),
+        });
     });
 
-    logger.log({ pageContent });
-    await firestore
-      .collection(Collection.Presentations)
-      .doc(file.id)
-      .set({
-        uid,
-        title: presentation.data.title,
-        notes: notes.join("\r\n"),
-        pageContent: pageContent.join("\r\n"),
-      });
-  });
-
-  return;
-});
+    return;
+  }
+);
 
 exports.questionDocument = onCall(async context => {
   let { id, question } = context.data;
@@ -250,7 +259,7 @@ exports.onPresentationWritten = onDocumentWritten(
         const id = event.data?.before.id;
         logger.log("Deleting embedding", id);
         await deleteEmbedding(id);
-        logger.log("Deletied embedding", id);
+        logger.log("Deleted embedding", id);
       }
       return;
     }

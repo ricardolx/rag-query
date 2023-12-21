@@ -6,10 +6,8 @@ import {
   useCallback,
 } from "react";
 import {
-  signInWithPopup,
   signOut,
   onAuthStateChanged,
-  GoogleAuthProvider,
   User,
   signInWithCustomToken,
   signInAnonymously,

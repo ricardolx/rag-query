@@ -61,7 +61,7 @@ PINECONE_ENVIRONMENT= Pinecone cloud environment
 ### Services to enable in GCP
 - Google Drive API
 - Google Slides API
-- Google Oauth API
+- IAM Service Account Credentials API 
 - Google Functions
 - Firebase Auth
 - Firestore
