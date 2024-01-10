@@ -4,8 +4,9 @@ import { UserAuth } from "../context/auth";
 import { functions, httpsCallable, firestore } from "../../firebase/firebase";
 import { collection, doc, onSnapshot, query, where } from "firebase/firestore";
 import { Loading } from "../components/Loading";
+import { getFileContent } from "../../../functions/src/data";
 
-interface Presentation {
+interface Documents {
   id: string;
   title: string;
 }
@@ -20,15 +21,16 @@ interface QuestionAndAnswer {
 
 const Page: React.FC = () => {
   const { user } = UserAuth();
-  const [presentations, setPresentations] = useState<Presentation[]>([]);
   const [selectedPresentation, setSelectedPresentation] = useState<
-    Presentation | undefined
+    Documents | undefined
   >();
   const [questionAndAnswer, setQnA] = useState<QuestionAndAnswer>({});
   const [loading, setLoading] = useState<boolean>(false);
+  const [readyDocuments, setReadyDocuments] = useState<Documents[]>([]);
 
   // initial load
   useEffect(() => {
+    console.log({ user });
     if (!user || user.isAnonymous) {
       return;
     }
@@ -62,7 +64,6 @@ const Page: React.FC = () => {
         const data = doc.data();
         presentations.push({ ...(data as any), id: doc.id });
       });
-      setPresentations(presentations);
     });
 
     return () => sub();
@@ -122,7 +123,7 @@ const Page: React.FC = () => {
   }, [selectedPresentation]);
 
   const toggleSelectedPresentation = useCallback(
-    (p: Presentation) => {
+    (p: Documents) => {
       if (selectedPresentation?.id === p.id) {
         setSelectedPresentation(undefined);
       } else {
@@ -133,7 +134,7 @@ const Page: React.FC = () => {
   );
 
   const presentationName = useCallback(
-    (p: Presentation, i: number) => {
+    (p: Documents, i: number) => {
       const textColor =
         selectedPresentation?.id === p.id ? "text-white" : "text-gray-600";
       return (
@@ -160,64 +161,76 @@ const Page: React.FC = () => {
       <p className="text-gray-300">{`Ask a question about ${selectedPresentation?.title}`}</p>
     );
   }, [selectedPresentation, questionAndAnswer.answer]);
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const fileContent = getFileContent(file);
+      console.log({ fileContent });
+      // Do something with the file
+      console.log(file.type);
+    }
+  };
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-between p-24">
-      {presentations.length === 0 && <Loading />}
       <div className="flex flex-row h-10 w-11/12 ">
         <div className="w-4/12">
-          <p className="mx-12">Presentations</p>
-          <ol className="mx-8 my-4">
-            {presentations.map((p, i) => (
-              <div
-                key={p.id + p.title}
-                className="rounded-lg px-2 md:hover:cursor-pointer md:hover:bg-gray-900"
-              >
-                {presentationName(p, i)}
-              </div>
-            ))}
-          </ol>
+          <p className="mx-12">Documents</p>
+          <ol className="mx-8 my-4"></ol>
         </div>
         <div className="flex flex-col h-96 w-full items-center justify-between bg-gray-900 rounded-lg p-5">
-          {formTitle}
-          <div>
-            {questionAndAnswer.answer && (
+          {readyDocuments.length === 0 ? (
+            <>
+              <p>Upload a document</p>
+              <input
+                type="file"
+                accept=".pdf,.txt,.docx"
+                onChange={handleFileUpload}
+              />
+            </>
+          ) : (
+            <>
+              {formTitle}
               <div>
-                {(selectedPresentation === undefined ||
-                  selectedPresentation.title !==
-                    questionAndAnswer.answer.title) && (
-                  <p className="text-gray-600 mx-8 my-2">{`From: ${questionAndAnswer.answer.title}`}</p>
+                {questionAndAnswer.answer && (
+                  <div>
+                    {(selectedPresentation === undefined ||
+                      selectedPresentation.title !==
+                        questionAndAnswer.answer.title) && (
+                      <p className="text-gray-600 mx-8 my-2">{`From: ${questionAndAnswer.answer.title}`}</p>
+                    )}
+                    <p className="text-gray-100 mx-8 my-2">
+                      {questionAndAnswer.answer.answer}
+                    </p>
+                  </div>
                 )}
-                <p className="text-gray-100 mx-8 my-2">
-                  {questionAndAnswer.answer.answer}
-                </p>
+                {loading && <Loading />}
               </div>
-            )}
-            {loading && <Loading />}
-          </div>
-          <form
-            className="w-full items-center justify-center flex"
-            onSubmit={submitQuestion}
-          >
-            <input
-              value={questionAndAnswer.newQuestion || ""}
-              onChange={e => setQnA({ newQuestion: e.target.value })}
-              className="p-2 rounded-lg text-black w-4/5"
-              onSubmit={submitQuestion}
-              required={true}
-              placeholder={
-                !selectedPresentation
-                  ? "Ask something about any presentation..."
-                  : `Ask something about ${selectedPresentation?.title}...`
-              }
-            />
-            <button
-              type="submit"
-              className="ml-5 border-2 border-sky-500 rounded-lg p-2 px-4"
-            >
-              Ask
-            </button>
-          </form>
+              <form
+                className="w-full items-center justify-center flex"
+                onSubmit={submitQuestion}
+              >
+                <input
+                  value={questionAndAnswer.newQuestion || ""}
+                  onChange={e => setQnA({ newQuestion: e.target.value })}
+                  className="p-2 rounded-lg text-black w-4/5"
+                  onSubmit={submitQuestion}
+                  required={true}
+                  placeholder={
+                    !selectedPresentation
+                      ? "Ask something about any presentation..."
+                      : `Ask something about ${selectedPresentation?.title}...`
+                  }
+                />
+                <button
+                  type="submit"
+                  className="ml-5 border-2 border-sky-500 rounded-lg p-2 px-4"
+                >
+                  Ask
+                </button>
+              </form>
+            </>
+          )}
         </div>
       </div>
     </div>
