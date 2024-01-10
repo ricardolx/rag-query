@@ -43,3 +43,5 @@ src/firebase/config.ts
 functions/lib/*
 functions/firebase-debug.log
 functions/ui-debug.log
+
+.firebaserc
