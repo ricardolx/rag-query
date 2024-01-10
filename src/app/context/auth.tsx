@@ -9,7 +9,6 @@ import {
   signOut,
   onAuthStateChanged,
   User,
-  signInWithCustomToken,
   signInAnonymously,
 } from "firebase/auth";
 import { auth } from "../../firebase/firebase";
@@ -18,7 +17,6 @@ type UserAuth = {
   googleSignIn: () => Promise<void>;
   logOut: () => void;
   user: User | null;
-  signInWithToken: (token: string) => void;
 };
 
 const AuthContext = createContext({} as UserAuth);
@@ -47,10 +45,6 @@ export const AuthContextProvider = ({
     signOut(auth);
   };
 
-  const signInWithToken = async (token: string) => {
-    await signInWithCustomToken(auth, token);
-  };
-
   useEffect(() => {
     const sub = onAuthStateChanged(auth, async currentUser => {
       if (currentUser !== null && !currentUser.isAnonymous) {
@@ -69,7 +63,6 @@ export const AuthContextProvider = ({
         user: user?.user,
         logOut,
         googleSignIn,
-        signInWithToken,
       }}
     >
       {children}

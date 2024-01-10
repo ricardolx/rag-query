@@ -2,7 +2,11 @@ import Link from "next/link";
 import React, { useEffect } from "react";
 import { UserAuth } from "../context/auth";
 import { useRouter } from "next/navigation";
-import { functions, httpsCallable } from "../../firebase/firebase";
+import {
+  GoogleAuthProvider,
+  auth,
+  signInWithPopup,
+} from "../../firebase/firebase";
 
 const Navbar = () => {
   const { user, logOut, googleSignIn } = UserAuth();
@@ -19,19 +23,15 @@ const Navbar = () => {
         router.push("/");
       }
     } else {
-      router.push("/slides");
+      router.push("/document");
     }
   }, [router, user]);
 
   const handleSignIn = async () => {
     try {
-      const call = httpsCallable(functions, "getAuthentication");
-      const response = await call();
-      const data = response.data as any;
-
-      window.location.href = data.url;
-    } catch (err) {
-      console.warn(err);
+      await signInWithPopup(auth, new GoogleAuthProvider());
+    } catch (err: any) {
+      const credential = GoogleAuthProvider.credentialFromError(err);
     }
   };
   const handleLogOut = async () => {
