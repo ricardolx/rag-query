@@ -39,7 +39,7 @@ exports.uploadDocument = onCall(
         .add({ content });
 
       // get the page embedding from OpenAI
-      const embedding = await getVectorEmbedding(notes);
+      const embedding = await getVectorEmbedding(content);
 
       // insert the page embedding into Pinecone,
       // mapped to the firestore document id
