@@ -32,7 +32,7 @@ exports.uploadDocument = onCall(
 
     const fileContent = await getFileContent(Buffer.from(buffer));
 
-    fileContent.forEach(async content => {
+    for (const content of fileContent) {
       // Insert the page into firestore
       const firestoreDocument = await firestore
         .collection("pages")
@@ -49,7 +49,7 @@ exports.uploadDocument = onCall(
       // insert the page embedding into Pinecone,
       // mapped to the firestore document id
       await insertEmbedding(firestoreDocument.id, embedding);
-    });
+    }
 
     return;
   }
