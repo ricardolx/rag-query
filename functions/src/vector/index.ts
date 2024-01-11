@@ -25,10 +25,15 @@ export const insertEmbedding = async (id: string, values: number[]) => {
     environment: process.env.PINECONE_ENVIRONMENT ?? "",
   });
 
-  await pinecone
-    .index(process.env.PINECONE_DOCUMENT_INDEX ?? "")
-    .upsert([{ id, values }]);
-  logger.log("Inserted to Pinecone", id);
+  try {
+    await pinecone
+      .index(process.env.PINECONE_DOCUMENT_INDEX ?? "")
+      .upsert([{ id, values }]);
+    logger.log("Inserted to Pinecone", id);
+  } catch (error) {
+    logger.warn("error inserting to pinecone", error);
+    throw error;
+  }
 };
 
 export const queryVectorIndex = async (query: string) => {

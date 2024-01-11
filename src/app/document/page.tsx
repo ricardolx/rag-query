@@ -22,7 +22,7 @@ interface QuestionAndAnswer {
 const Page: React.FC = () => {
   const { user } = UserAuth();
   console.log({ user });
-  const [readyDocuments, setReadyDocuments] = useState<Documents[]>([]);
+  const [readyDocuments, setReadyDocuments] = useState<boolean>(false);
   const [questionAndAnswer, setQnA] = useState<QuestionAndAnswer>({});
   const [loading, setLoading] = useState<boolean>(false);
 
@@ -35,11 +35,7 @@ const Page: React.FC = () => {
 
     const sub = onSnapshot(q, snapshot => {
       console.log({ snapshot: snapshot.size });
-      const readyDocuments: { id: string; content: string }[] = [];
-      snapshot.forEach(doc => {
-        const data = doc.data();
-        readyDocuments.push({ ...(data as any), id: doc.id });
-      });
+      setReadyDocuments(snapshot.size > 0);
     });
 
     return () => sub();
@@ -131,7 +127,7 @@ const Page: React.FC = () => {
           <ol className="mx-8 my-4"></ol>
         </div>
         <div className="flex flex-col h-96 w-full items-center justify-between bg-gray-900 rounded-lg p-5">
-          {readyDocuments.length === 0 ? (
+          {!readyDocuments ? (
             <>
               <p>Upload a document</p>
               <input
