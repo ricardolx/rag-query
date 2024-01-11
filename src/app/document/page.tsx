@@ -15,7 +15,7 @@ interface QuestionAndAnswer {
   answer?: {
     answer: string;
     question: string;
-    title?: string;
+    documentId?: string;
   };
 }
 
@@ -142,6 +142,12 @@ const Page: React.FC = () => {
               <div>
                 {questionAndAnswer.answer && (
                   <div>
+                    <p className="text-gray-300 mx-8 mb-5">
+                      {`Question: ${questionAndAnswer.answer.question}`}
+                    </p>
+                    <p className="text-gray-300 mx-8 mb-10">
+                      {`Answer from document: ${questionAndAnswer.answer.documentId}`}
+                    </p>
                     <p className="text-gray-100 mx-8 my-2">
                       {questionAndAnswer.answer.answer}
                     </p>
