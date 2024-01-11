@@ -19,7 +19,6 @@ import { getFirestore } from "firebase-admin/firestore";
 import { initializeApp } from "firebase-admin/app";
 
 initializeApp();
-
 const firestore = getFirestore();
 
 exports.uploadDocument = onCall(
@@ -28,9 +27,9 @@ exports.uploadDocument = onCall(
     memory: "1GiB",
   },
   async context => {
-    const data = context.data as File;
+    const { file } = context.data;
 
-    const content = await getFileContent(data);
+    const content = await getFileContent(file);
 
     content.forEach(async notes => {
       // Insert the page into firestore

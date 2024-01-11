@@ -3,7 +3,6 @@ import PDFParser from "pdf2json";
 const parsePdf = (buffer: Buffer): Promise<string[]> => {
   return new Promise((resolve, reject) => {
     const parser = new PDFParser();
-
     parser.on("pdfParser_dataError", errData => reject(errData));
     parser.on("pdfParser_dataReady", pdfData => {
       const pages = pdfData.Pages;

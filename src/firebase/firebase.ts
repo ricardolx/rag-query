@@ -16,7 +16,7 @@ const app = initializeApp(firebaseConfig);
 //   const analytics = getAnalytics(app);
 // }
 export const auth = getAuth(app);
-export const functions = getFunctions();
+export const functions = getFunctions(app);
 export const firestore = getFirestore(app);
 export { httpsCallable };
 export { GoogleAuthProvider, signInWithPopup };

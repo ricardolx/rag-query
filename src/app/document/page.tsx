@@ -21,48 +21,24 @@ interface QuestionAndAnswer {
 
 const Page: React.FC = () => {
   const { user } = UserAuth();
-  const [selectedPresentation, setSelectedPresentation] = useState<
-    Documents | undefined
-  >();
+  console.log({ user });
+  const [readyDocuments, setReadyDocuments] = useState<Documents[]>([]);
   const [questionAndAnswer, setQnA] = useState<QuestionAndAnswer>({});
   const [loading, setLoading] = useState<boolean>(false);
-  const [readyDocuments, setReadyDocuments] = useState<Documents[]>([]);
 
   // initial load
   useEffect(() => {
-    console.log({ user });
     if (!user || user.isAnonymous) {
       return;
     }
-    const fetchSlides = async () => {
-      try {
-        const call = httpsCallable(functions, "getSlides");
-
-        await call();
-      } catch (err) {
-        console.warn(err);
-      }
-    };
-    fetchSlides();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
-
-  useEffect(() => {
-    if (!user || user.isAnonymous) {
-      return;
-    }
-    console.log(user.email);
-    const q = query(
-      collection(firestore, "Presentations"),
-      where("uid", "==", user.uid)
-    );
+    const q = query(collection(firestore, "pages"));
 
     const sub = onSnapshot(q, snapshot => {
-      console.log({ snapshot });
-      const presentations: { id: string; title: string }[] = [];
+      console.log({ snapshot: snapshot.size });
+      const readyDocuments: { id: string; content: string }[] = [];
       snapshot.forEach(doc => {
         const data = doc.data();
-        presentations.push({ ...(data as any), id: doc.id });
+        readyDocuments.push({ ...(data as any), id: doc.id });
       });
     });
 
@@ -81,9 +57,8 @@ const Page: React.FC = () => {
         }
         setLoading(true);
         const call = httpsCallable(functions, "questionDocument");
-        const id = selectedPresentation?.id ?? "NONE";
 
-        const data = { id, question: questionAndAnswer.newQuestion?.trim() };
+        const data = { question: questionAndAnswer.newQuestion?.trim() };
 
         const response = await call(data);
 
@@ -115,59 +90,26 @@ const Page: React.FC = () => {
       }
       setLoading(false);
     },
-    [questionAndAnswer, selectedPresentation]
-  );
-
-  useEffect(() => {
-    console.log({ selectedPresentation });
-  }, [selectedPresentation]);
-
-  const toggleSelectedPresentation = useCallback(
-    (p: Documents) => {
-      if (selectedPresentation?.id === p.id) {
-        setSelectedPresentation(undefined);
-      } else {
-        setSelectedPresentation(p);
-      }
-    },
-    [selectedPresentation, setSelectedPresentation]
-  );
-
-  const presentationName = useCallback(
-    (p: Documents, i: number) => {
-      const textColor =
-        selectedPresentation?.id === p.id ? "text-white" : "text-gray-600";
-      return (
-        <li
-          onClick={() => toggleSelectedPresentation(p)}
-          className={`${textColor} dark:md:hover:text-gray-300`}
-        >
-          {p.title}
-        </li>
-      );
-    },
-    [selectedPresentation]
+    [questionAndAnswer]
   );
 
   const formTitle = useMemo(() => {
-    if (questionAndAnswer.answer !== undefined) {
-      return (
-        <p className="text-gray-300">{`Q: ${questionAndAnswer.answer.question}`}</p>
-      );
-    }
-    return selectedPresentation === undefined ? (
-      <p className="text-gray-300">Ask a question</p>
-    ) : (
-      <p className="text-gray-300">{`Ask a question about ${selectedPresentation?.title}`}</p>
-    );
-  }, [selectedPresentation, questionAndAnswer.answer]);
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    return <p className="text-gray-300">Ask a question</p>;
+  }, [questionAndAnswer.answer]);
+
+  const handleFileUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = event.target.files?.[0];
     if (file) {
-      const fileContent = getFileContent(file);
-      console.log({ fileContent });
-      // Do something with the file
-      console.log(file.type);
+      setLoading(true);
+      try {
+        const call = httpsCallable(functions, "questionDocument");
+        await call({ file });
+      } catch (e) {
+        console.warn(e);
+      }
+      setLoading(false);
     }
   };
 
@@ -194,11 +136,6 @@ const Page: React.FC = () => {
               <div>
                 {questionAndAnswer.answer && (
                   <div>
-                    {(selectedPresentation === undefined ||
-                      selectedPresentation.title !==
-                        questionAndAnswer.answer.title) && (
-                      <p className="text-gray-600 mx-8 my-2">{`From: ${questionAndAnswer.answer.title}`}</p>
-                    )}
                     <p className="text-gray-100 mx-8 my-2">
                       {questionAndAnswer.answer.answer}
                     </p>
@@ -216,11 +153,7 @@ const Page: React.FC = () => {
                   className="p-2 rounded-lg text-black w-4/5"
                   onSubmit={submitQuestion}
                   required={true}
-                  placeholder={
-                    !selectedPresentation
-                      ? "Ask something about any presentation..."
-                      : `Ask something about ${selectedPresentation?.title}...`
-                  }
+                  placeholder={"Ask something"}
                 />
                 <button
                   type="submit"
