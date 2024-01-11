@@ -2,7 +2,7 @@ import { Pinecone } from "@pinecone-database/pinecone";
 import * as logger from "firebase-functions/logger";
 import OpenAI from "openai";
 
-export const getEmbeddingVector = async (text: string) => {
+export const getVectorEmbedding = async (text: string) => {
   const openai = new OpenAI({
     apiKey: process.env.OPENAI_KEY,
   });
@@ -39,7 +39,7 @@ export const queryVectorIndex = async (query: string) => {
 
   const index = pinecone.index(process.env.PINECONE_DOCUMENT_INDEX ?? "");
 
-  const vector = await getEmbeddingVector(query);
+  const vector = await getVectorEmbedding(query);
 
   const response = await index.query({
     vector,

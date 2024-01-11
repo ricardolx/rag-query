@@ -1,29 +1,32 @@
-import { getFirestore } from "firebase-admin/firestore";
-import { Collection } from "../types";
+import PDFParser from "pdf2json";
 
-export const firestore = getFirestore();
+const parsePdf = (buffer: Buffer): Promise<string[]> => {
+  return new Promise((resolve, reject) => {
+    const parser = new PDFParser();
 
-export const resolveMissingPresentations = async (
-  uid: string,
-  presentationIds: string[]
-) => {
-  try {
-    const presentations = await firestore
-      .collection(Collection.Presentations)
-      .where("uid", "==", uid)
-      .get();
+    parser.on("pdfParser_dataError", errData => reject(errData));
+    parser.on("pdfParser_dataReady", pdfData => {
+      const pages = pdfData.Pages;
+      const texts = pages.flatMap(page => {
+        const pageText = page.Texts.map(text => {
+          const word = text.R.map(r => r.T).join(" ");
+          const decodedWord = decodeURIComponent(word);
+          return decodedWord;
+        }).join(" ");
 
-    const presentationIdsInDb = presentations.docs.map(
-      presentation => presentation.id
-    );
+        return pageText;
+      });
 
-    const missingPresentations = presentationIds.filter(
-      presentationId => !presentationIdsInDb.includes(presentationId)
-    );
+      resolve(texts);
+    });
 
-    return missingPresentations;
-  } catch (error: any) {
-    console.error(error.message);
-    return [];
-  }
+    parser.parseBuffer(buffer);
+  });
+};
+
+export const getFileContent = async (file: File) => {
+  const content = await file.arrayBuffer();
+  const buffer = Buffer.from(content);
+
+  return await parsePdf(buffer);
 };
