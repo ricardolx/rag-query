@@ -62,6 +62,8 @@ exports.questionDocument = onCall(async context => {
 
   const doc = await firestore.collection("pages").doc(id).get();
 
+  const documentId = doc.id;
+
   const prompt = `Given a document, answer a question about the document
     Do not include any other information. Only include the information that is
     in the document in the answer. If there is a question that 
@@ -87,5 +89,5 @@ exports.questionDocument = onCall(async context => {
 
   const answer = response.choices[0].text;
 
-  return { answer, question };
+  return { answer, question, documentId };
 });
