@@ -27,9 +27,9 @@ exports.uploadDocument = onCall(
     memory: "1GiB",
   },
   async context => {
-    const { file } = context.data;
+    const { buffer } = context.data;
 
-    const content = await getFileContent(file);
+    const content = await getFileContent(buffer);
 
     content.forEach(async notes => {
       // Insert the page into firestore

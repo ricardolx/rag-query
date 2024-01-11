@@ -101,11 +101,14 @@ const Page: React.FC = () => {
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     const file = event.target.files?.[0];
+    const buffer = await file?.arrayBuffer();
+    const fileName = file?.name;
     if (file) {
       setLoading(true);
       try {
-        const call = httpsCallable(functions, "questionDocument");
-        await call({ file });
+        const call = httpsCallable(functions, "uploadDocument");
+        const data = { buffer, fileName };
+        await call(data);
       } catch (e) {
         console.warn(e);
       }

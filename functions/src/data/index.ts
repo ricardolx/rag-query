@@ -23,9 +23,6 @@ const parsePdf = (buffer: Buffer): Promise<string[]> => {
   });
 };
 
-export const getFileContent = async (file: File) => {
-  const content = await file.arrayBuffer();
-  const buffer = Buffer.from(content);
-
-  return await parsePdf(buffer);
+export const getFileContent = async (buffer: ArrayBuffer) => {
+  return await parsePdf(Buffer.from(buffer));
 };
