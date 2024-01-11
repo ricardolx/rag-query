@@ -32,5 +32,6 @@ module.exports = {
     "@typescript-eslint/no-explicit-any": "off",
     "camelcase": "off",
     "arrow-parens": ["error", "as-needed"],
+    "@typescript-eslint/no-var-requires": "off",
   },
 };

@@ -27,11 +27,12 @@ exports.uploadDocument = onCall(
     memory: "1GiB",
   },
   async context => {
-    const { buffer } = context.data;
+    const { buffer: base64String } = context.data;
+    const buffer = Buffer.from(base64String, "base64");
 
-    const content = await getFileContent(buffer);
+    const fileContent = await getFileContent(Buffer.from(buffer));
 
-    content.forEach(async notes => {
+    fileContent.forEach(async content => {
       // Insert the page into firestore
       const firestoreDocument = await firestore
         .collection("pages")

@@ -101,13 +101,20 @@ const Page: React.FC = () => {
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     const file = event.target.files?.[0];
-    const buffer = await file?.arrayBuffer();
+    const arrayBuffer = await file?.arrayBuffer()!;
+    const uint8Array = new Uint8Array(arrayBuffer);
+    let binaryString = "";
+    uint8Array.forEach(byte => {
+      binaryString += String.fromCharCode(byte);
+    });
+    const base64String = btoa(binaryString);
     const fileName = file?.name;
     if (file) {
       setLoading(true);
       try {
         const call = httpsCallable(functions, "uploadDocument");
-        const data = { buffer, fileName };
+        const data = { buffer: base64String, fileName };
+        console.log("uploading", data);
         await call(data);
       } catch (e) {
         console.warn(e);
