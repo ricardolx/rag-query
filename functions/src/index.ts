@@ -68,8 +68,6 @@ exports.questionDocument = onCall(async context => {
     Do not include any other information. Only include the information that is
     in the document in the answer. If there is a question that 
     cannot be answered, please say that there isn't enough information.
-    The slide content may not be discernable. If that is the case 
-    then ignore it and focus on the notes.
     
     Document: ${doc.data()?.content}
 
